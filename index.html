@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="bn">
 <head>
@@ -12,9 +11,12 @@ header{background:#0756b5;color:white;padding:22px;text-align:center}
 main{padding:14px;max-width:950px;margin:auto}
 .card{background:white;padding:15px;margin:12px 0;border-radius:12px;box-shadow:0 2px 8px #ddd}
 input,select{width:100%;padding:13px;margin:7px 0;border:1px solid #aaa;border-radius:7px;box-sizing:border-box}
-button{background:#0756b5;color:white;border:0;padding:12px 18px;border-radius:7px;margin:5px}
+button{background:#0756b5;color:white;border:0;padding:12px 18px;border-radius:7px;margin:5px;cursor:pointer}
 #map{height:350px;border-radius:10px}
 .vehicle{padding:12px;border-bottom:1px solid #ddd}
+.district-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:6px}
+.district-grid button{margin:0;padding:10px 5px}
+.small{font-size:13px;color:#567}
 </style>
 </head>
 <body>
@@ -22,6 +24,7 @@ button{background:#0756b5;color:white;border:0;padding:12px 18px;border-radius:7
 <h1>🇧🇩 BD GPS Tracker</h1>
 <p>বাংলাদেশ যানবাহন GPS ট্র্যাকিং</p>
 </header>
+
 <main>
 <div class="card">
 <h3>🔎 গাড়ির নম্বর দিয়ে খুঁজুন</h3>
@@ -38,9 +41,20 @@ button{background:#0756b5;color:white;border:0;padding:12px 18px;border-radius:7
 </div>
 
 <div class="card">
+<h3>🇧🇩 বাংলাদেশের ৬৪ জেলা</h3>
+<p>জেলার নাম নির্বাচন করুন অথবা নিচের তালিকায় চাপ দিন।</p>
+<select id="districtSelect" onchange="showDistrict(this.value)">
+<option value="">জেলা নির্বাচন করুন</option>
+</select>
+<div class="district-grid" id="districtList"></div>
+<p class="small">জেলার কেন্দ্রের আনুমানিক অবস্থান দেখানো হবে। এটি জেলার সীমানার মানচিত্র নয়।</p>
+</div>
+
+<div class="card">
 <h3>🚘 যানবাহনের তালিকা</h3>
 <div id="vehicles"></div>
 </div>
+
 <div class="card">
 <h3>গুরুত্বপূর্ণ তথ্য</h3>
 <p>এটি একটি ডেমো GPS সিস্টেম। বাস্তব গাড়ির লাইভ অবস্থানের জন্য মালিকের অনুমতি এবং GPS ডিভাইস বা সংযুক্ত ফোন প্রয়োজন।</p>
@@ -50,6 +64,7 @@ button{background:#0756b5;color:white;border:0;padding:12px 18px;border-radius:7
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const map=L.map('map').setView([23.8103,90.4125],7);
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
 attribution:'© OpenStreetMap'
 }).addTo(map);
@@ -62,26 +77,136 @@ const cars=[
 ];
 
 const markers={};
+
 cars.forEach(car=>{
 markers[car.number]=L.marker(car.pos).addTo(map)
 .bindPopup(car.type+' — ডেমো');
 });
 
 document.getElementById('vehicles').innerHTML=cars.map(c=>
-'<div class="vehicle">'+c.type+' — '+c.number+'<br>জেলা: '+c.district+' | ডেমো</div>'
+'<div class="vehicle">'+c.type+' — '+c.number+
+'<br>জেলা: '+c.district+' | ডেমো</div>'
 ).join('');
 
 function searchVehicle(){
 const q=document.getElementById('searchNumber').value.trim();
 const car=cars.find(c=>c.number===q);
 const result=document.getElementById('result');
+
 if(!car){
 result.textContent='এই নম্বরে কোনো ডেমো গাড়ি পাওয়া যায়নি।';
 return;
 }
-result.innerHTML='<h3>'+car.type+'</h3><p>নম্বর: '+car.number+'</p><p>জেলা: '+car.district+'</p><p>অবস্থা: ডেমো লোকেশন</p>';
+
+result.innerHTML='<h3>'+car.type+'</h3><p>নম্বর: '+car.number+
+'</p><p>জেলা: '+car.district+
+'</p><p>অবস্থা: ডেমো লোকেশন</p>';
+
 map.setView(car.pos,14);
 markers[car.number].openPopup();
+}
+
+const districts=[
+['ঢাকা',23.8103,90.4125],
+['গাজীপুর',24.0023,90.4264],
+['নারায়ণগঞ্জ',23.6238,90.5000],
+['নরসিংদী',23.9229,90.7177],
+['মুন্সিগঞ্জ',23.5422,90.5305],
+['মানিকগঞ্জ',23.8617,90.0003],
+['টাঙ্গাইল',24.2513,89.9167],
+['কিশোরগঞ্জ',24.4260,90.9821],
+['ফরিদপুর',23.6071,89.8429],
+['গোপালগঞ্জ',23.0051,89.8266],
+['মাদারীপুর',23.1641,90.1897],
+['রাজবাড়ী',23.7574,89.6445],
+['শরীয়তপুর',23.1274,90.2250],
+['চট্টগ্রাম',22.3569,91.7832],
+['কক্সবাজার',21.4272,92.0058],
+['কুমিল্লা',23.4607,91.1809],
+['ব্রাহ্মণবাড়িয়া',23.9571,91.1119],
+['চাঁদপুর',23.2333,90.6712],
+['লক্ষ্মীপুর',22.9447,90.8282],
+['নোয়াখালী',22.8696,91.0995],
+['ফেনী',23.0159,91.3976],
+['রাঙ্গামাটি',22.6533,92.1750],
+['খাগড়াছড়ি',23.1193,91.9847],
+['বান্দরবান',22.1953,92.2184],
+['সিলেট',24.8949,91.8687],
+['মৌলভীবাজার',24.4829,91.7774],
+['হবিগঞ্জ',24.3749,91.4155],
+['সুনামগঞ্জ',25.0658,91.3950],
+['রাজশাহী',24.3745,88.6042],
+['নাটোর',24.4206,89.0000],
+['নওগাঁ',24.7936,88.9318],
+['চাঁপাইনবাবগঞ্জ',24.5965,88.2775],
+['পাবনা',24.0064,89.2372],
+['সিরাজগঞ্জ',24.4534,89.7007],
+['বগুড়া',24.8465,89.3778],
+['জয়পুরহাট',25.0968,89.0227],
+['রংপুর',25.7439,89.2752],
+['দিনাজপুর',25.6279,88.6332],
+['কুড়িগ্রাম',25.8054,89.6362],
+['গাইবান্ধা',25.3288,89.5281],
+['লালমনিরহাট',25.9165,89.4532],
+['নীলফামারী',25.9318,88.8560],
+['পঞ্চগড়',26.3411,88.5542],
+['ঠাকুরগাঁও',26.0337,88.4617],
+['খুলনা',22.8456,89.5403],
+['যশোর',23.1664,89.2081],
+['সাতক্ষীরা',22.7185,89.0705],
+['বাগেরহাট',22.6516,89.7859],
+['নড়াইল',23.1725,89.5127],
+['মাগুরা',23.4855,89.4198],
+['ঝিনাইদহ',23.5448,89.1539],
+['কুষ্টিয়া',23.9013,89.1205],
+['চুয়াডাঙ্গা',23.6402,88.8418],
+['মেহেরপুর',23.7622,88.6318],
+['বরিশাল',22.7010,90.3535],
+['পটুয়াখালী',22.3596,90.3299],
+['ভোলা',22.6859,90.6482],
+['পিরোজপুর',22.5841,89.9720],
+['ঝালকাঠি',22.6406,90.1987],
+['বরগুনা',22.1592,90.1266],
+['ময়মনসিংহ',24.7471,90.4203],
+['জামালপুর',24.9375,89.9378],
+['শেরপুর',25.0205,90.0153],
+['নেত্রকোণা',24.8700,90.7278]
+];
+
+const select=document.getElementById('districtSelect');
+const list=document.getElementById('districtList');
+
+districts.forEach(d=>{
+const option=document.createElement('option');
+option.value=d[0];
+option.textContent=d[0];
+select.appendChild(option);
+
+const button=document.createElement('button');
+button.textContent=d[0];
+button.onclick=()=>showDistrict(d[0]);
+list.appendChild(button);
+});
+
+let districtMarker=null;
+
+function showDistrict(name){
+const d=districts.find(x=>x[0]===name);
+if(!d)return;
+
+map.setView([d[1],d[2]],11);
+
+if(districtMarker)map.removeLayer(districtMarker);
+
+districtMarker=L.marker([d[1],d[2]])
+.addTo(map)
+.bindPopup(name+' জেলার আনুমানিক কেন্দ্র')
+.openPopup();
+
+document.getElementById('status').textContent=
+name+' জেলার আনুমানিক অবস্থান দেখানো হচ্ছে।';
+
+select.value=name;
 }
 
 function myLocation(){
@@ -89,16 +214,26 @@ if(!navigator.geolocation){
 document.getElementById('status').textContent='GPS পাওয়া যাচ্ছে না।';
 return;
 }
+
 document.getElementById('status').textContent='অনুমতির অপেক্ষায়...';
+
 navigator.geolocation.getCurrentPosition(p=>{
 const pos=[p.coords.latitude,p.coords.longitude];
-L.marker(pos).addTo(map).bindPopup('আপনার লোকেশন').openPopup();
+
+L.marker(pos).addTo(map)
+.bindPopup('আপনার লোকেশন').openPopup();
+
 map.setView(pos,15);
-document.getElementById('status').textContent='আপনার লোকেশন পাওয়া গেছে।';
+
+document.getElementById('status').textContent=
+'আপনার লোকেশন পাওয়া গেছে।';
+
 },()=>{
-document.getElementById('status').textContent='GPS অনুমতি দিন এবং Location চালু করুন।';
+document.getElementById('status').textContent=
+'GPS অনুমতি দিন এবং Location চালু করুন।';
 });
 }
 </script>
 </body>
 </html>
+
