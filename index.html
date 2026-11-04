@@ -1,1 +1,104 @@
 
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BD GPS Tracker</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+body{margin:0;background:#eef4fc;font-family:Arial;color:#123}
+header{background:#0756b5;color:white;padding:22px;text-align:center}
+main{padding:14px;max-width:950px;margin:auto}
+.card{background:white;padding:15px;margin:12px 0;border-radius:12px;box-shadow:0 2px 8px #ddd}
+input,select{width:100%;padding:13px;margin:7px 0;border:1px solid #aaa;border-radius:7px;box-sizing:border-box}
+button{background:#0756b5;color:white;border:0;padding:12px 18px;border-radius:7px;margin:5px}
+#map{height:350px;border-radius:10px}
+.vehicle{padding:12px;border-bottom:1px solid #ddd}
+</style>
+</head>
+<body>
+<header>
+<h1>🇧🇩 BD GPS Tracker</h1>
+<p>বাংলাদেশ যানবাহন GPS ট্র্যাকিং</p>
+</header>
+<main>
+<div class="card">
+<h3>🔎 গাড়ির নম্বর দিয়ে খুঁজুন</h3>
+<input id="searchNumber" placeholder="গাড়ির নম্বর লিখুন">
+<button onclick="searchVehicle()">সার্চ করুন</button>
+<div id="result">গাড়ির নম্বর লিখে সার্চ করুন।</div>
+</div>
+
+<div class="card">
+<h3>🗺️ বাংলাদেশের GPS ম্যাপ</h3>
+<div id="map"></div>
+<button onclick="myLocation()">📍 আমার GPS লোকেশন</button>
+<p id="status">নিজের লোকেশন দেখতে বাটনে চাপুন।</p>
+</div>
+
+<div class="card">
+<h3>🚘 যানবাহনের তালিকা</h3>
+<div id="vehicles"></div>
+</div>
+<div class="card">
+<h3>গুরুত্বপূর্ণ তথ্য</h3>
+<p>এটি একটি ডেমো GPS সিস্টেম। বাস্তব গাড়ির লাইভ অবস্থানের জন্য মালিকের অনুমতি এবং GPS ডিভাইস বা সংযুক্ত ফোন প্রয়োজন।</p>
+</div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map=L.map('map').setView([23.8103,90.4125],7);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+attribution:'© OpenStreetMap'
+}).addTo(map);
+
+const cars=[
+{number:'ঢাকা মেট্রো-গ ১২-৩৪৫৬',type:'ট্রাক',district:'ঢাকা',pos:[23.8103,90.4125]},
+{number:'চট্টগ্রাম মেট্রো-খ ১১-২২৩৩',type:'বাস',district:'চট্টগ্রাম',pos:[22.3569,91.7832]},
+{number:'সিলেট মেট্রো-চ ১৫-৬৭৮৯',type:'কার',district:'সিলেট',pos:[24.8949,91.8687]},
+{number:'রাজশাহী মেট্রো-ল ১০-১২৩৪',type:'মোটরসাইকেল',district:'রাজশাহী',pos:[24.3745,88.6042]}
+];
+
+const markers={};
+cars.forEach(car=>{
+markers[car.number]=L.marker(car.pos).addTo(map)
+.bindPopup(car.type+' — ডেমো');
+});
+
+document.getElementById('vehicles').innerHTML=cars.map(c=>
+'<div class="vehicle">'+c.type+' — '+c.number+'<br>জেলা: '+c.district+' | ডেমো</div>'
+).join('');
+
+function searchVehicle(){
+const q=document.getElementById('searchNumber').value.trim();
+const car=cars.find(c=>c.number===q);
+const result=document.getElementById('result');
+if(!car){
+result.textContent='এই নম্বরে কোনো ডেমো গাড়ি পাওয়া যায়নি।';
+return;
+}
+result.innerHTML='<h3>'+car.type+'</h3><p>নম্বর: '+car.number+'</p><p>জেলা: '+car.district+'</p><p>অবস্থা: ডেমো লোকেশন</p>';
+map.setView(car.pos,14);
+markers[car.number].openPopup();
+}
+
+function myLocation(){
+if(!navigator.geolocation){
+document.getElementById('status').textContent='GPS পাওয়া যাচ্ছে না।';
+return;
+}
+document.getElementById('status').textContent='অনুমতির অপেক্ষায়...';
+navigator.geolocation.getCurrentPosition(p=>{
+const pos=[p.coords.latitude,p.coords.longitude];
+L.marker(pos).addTo(map).bindPopup('আপনার লোকেশন').openPopup();
+map.setView(pos,15);
+document.getElementById('status').textContent='আপনার লোকেশন পাওয়া গেছে।';
+},()=>{
+document.getElementById('status').textContent='GPS অনুমতি দিন এবং Location চালু করুন।';
+});
+}
+</script>
+</body>
+</html>
