@@ -1,1 +1,117 @@
 
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BD-GPS-Tracker</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f1f5fb;color:#17243a}
+header{background:#0756c9;color:white;padding:20px}
+header h2{margin:0}
+header p{margin:6px 0 0;font-size:13px}
+main{max-width:1000px;margin:15px auto;padding:12px}
+.card{background:white;padding:16px;border-radius:15px;margin-bottom:15px;box-shadow:0 3px 15px #0001}
+#map{height:350px;border-radius:12px}
+button{padding:13px;border:0;border-radius:9px;background:#0756c9;color:white;font-weight:bold;margin:5px 3px}
+.stop{background:#d92d20}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.info div{background:#edf4ff;padding:12px;border-radius:10px;overflow-wrap:anywhere}
+small{color:#64748b}
+b{display:block;margin-top:5px}
+</style>
+</head>
+<body>
+<header>
+<h2>🌍 BD-GPS-Tracker</h2>
+<p>Global GPS & Fleet Management System</p>
+</header>
+
+<main>
+<section class="card">
+<h3>📍 Live GPS Tracking</h3>
+<div id="map"></div>
+<button onclick="startGPS()">আমার GPS চালু করুন</button>
+<button class="stop" onclick="stopGPS()">বন্ধ করুন</button>
+</section>
+
+<section class="card">
+<h3>GPS Information</h3>
+<div class="info">
+<div><small>Latitude</small><b id="lat">—</b></div>
+<div><small>Longitude</small><b id="lng">—</b></div>
+<div><small>Accuracy</small><b id="accuracy">—</b></div>
+<div><small>Speed</small><b id="speed">—</b></div>
+</div>
+<p id="status">GPS বন্ধ আছে</p>
+</section>
+
+<section class="card">
+<h3>🚗 Vehicle Management</h3>
+<p>My Phone GPS — নিজের ফোনের অবস্থান</p>
+<p>Demo Vehicle 01 — নমুনা গাড়ি, বাস্তব GPS নয়</p>
+</section>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map=L.map('map').setView([23.8103,90.4125],5);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+attribution:'© OpenStreetMap'
+}).addTo(map);
+
+let marker=null,circle=null,watch=null;
+
+function startGPS(){
+if(!navigator.geolocation){
+alert("এই ব্রাউজারে GPS নেই");
+return;
+}
+if(!window.isSecureContext){
+alert("GPS ব্যবহারের জন্য HTTPS দরকার");
+return;
+}
+document.getElementById("status").innerText="GPS অনুমতির অপেক্ষায়...";
+watch=navigator.geolocation.watchPosition(pos=>{
+const c=pos.coords;
+const lat=c.latitude;
+const lng=c.longitude;
+
+document.getElementById("lat").innerText=lat.toFixed(6);
+document.getElementById("lng").innerText=lng.toFixed(6);
+document.getElementById("accuracy").innerText=Math.round(c.accuracy)+" m";
+document.getElementById("speed").innerText=
+c.speed===null?"—":(c.speed*3.6).toFixed(1)+" km/h";
+
+const point=[lat,lng];
+
+if(!marker){
+marker=L.marker(point).addTo(map).bindPopup("আপনার বর্তমান অবস্থান");
+circle=L.circle(point,{radius:c.accuracy}).addTo(map);
+}else{
+marker.setLatLng(point);
+circle.setLatLng(point).setRadius(c.accuracy);
+}
+
+map.setView(point,16);
+document.getElementById("status").innerText="🟢 GPS Live";
+},err=>{
+document.getElementById("status").innerText=
+"GPS Error: "+err.message;
+},{enableHighAccuracy:true,maximumAge:3000,timeout:20000});
+}
+
+function stopGPS(){
+if(watch!==null){
+navigator.geolocation.clearWatch(watch);
+watch=null;
+}
+document.getElementById("status").innerText="GPS বন্ধ";
+}
+</script>
+</body>
+</html>
+
