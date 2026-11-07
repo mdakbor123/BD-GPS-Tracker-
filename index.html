@@ -5,7 +5,9 @@
 <meta charset="UTF-8">
 <meta name="google-site-verification" content="qRDSuDo2iZ6ctYGFSfKIpCJWhId4ZC9Gzq06jcd6_hw" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BD-GPS-Tracker</title>
+<meta name="theme-color" content="#0756c9">
+<meta name="description" content="BD GPS Tracker - Global GPS tracking and fleet management system.">
+<title>BD GPS Tracker</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 *{box-sizing:border-box}
@@ -75,6 +77,9 @@ if(!window.isSecureContext){
 alert("GPS ব্যবহারের জন্য HTTPS দরকার");
 return;
 }
+if(watch!==null){
+navigator.geolocation.clearWatch(watch);
+}
 document.getElementById("status").innerText="GPS অনুমতির অপেক্ষায়...";
 watch=navigator.geolocation.watchPosition(pos=>{
 const c=pos.coords;
@@ -100,8 +105,7 @@ circle.setLatLng(point).setRadius(c.accuracy);
 map.setView(point,16);
 document.getElementById("status").innerText="🟢 GPS Live";
 },err=>{
-document.getElementById("status").innerText=
-"GPS Error: "+err.message;
+document.getElementById("status").innerText="GPS Error: "+err.message;
 },{enableHighAccuracy:true,maximumAge:3000,timeout:20000});
 }
 
